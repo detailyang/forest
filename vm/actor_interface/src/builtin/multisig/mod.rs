@@ -7,7 +7,7 @@ use std::error::Error;
 use vm::ActorState;
 
 /// Multisig actor method.
-pub type Method = actorv3::multisig::Method;
+pub type Method = actorv5::multisig::Method;
 
 /// Multisig actor state.
 #[derive(Serialize)]
@@ -17,6 +17,7 @@ pub enum State {
     V2(actorv2::multisig::State),
     V3(actorv3::multisig::State),
     V4(actorv4::multisig::State),
+    V5(actorv5::multisig::State),
 }
 
 impl State {
@@ -43,6 +44,11 @@ impl State {
             Ok(store
                 .get(&actor.state)?
                 .map(State::V4)
+                .ok_or("Actor state doesn't exist in store")?)
+        } else if actor.code == *actorv5::MULTISIG_ACTOR_CODE_ID {
+            Ok(store
+                .get(&actor.state)?
+                .map(State::V5)
                 .ok_or("Actor state doesn't exist in store")?)
         } else {
             Err(format!("Unknown actor code {}", actor.code).into())
