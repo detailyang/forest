@@ -91,6 +91,8 @@ where
     BS: BlockStore,
     RT: Runtime<BS>,
 {
+    println!("zzzz {:?} {:?}", code, *CRON_ACTOR_CODE_ID);
+
     if code == &*SYSTEM_ACTOR_CODE_ID {
         Some(system::Actor::invoke_method(rt, method_num, params))
     } else if code == &*INIT_ACTOR_CODE_ID {
@@ -114,6 +116,7 @@ where
     } else if code == &*VERIFREG_ACTOR_CODE_ID {
         Some(verifreg::Actor::invoke_method(rt, method_num, params))
     } else {
+        println!("nonononononone {:?} {:?}", code, *CRON_ACTOR_CODE_ID);
         None
     }
 }

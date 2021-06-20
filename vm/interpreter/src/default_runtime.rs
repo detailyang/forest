@@ -429,6 +429,7 @@ where
         params: &Serialized,
         to: &Address,
     ) -> Result<Serialized, ActorError> {
+        println!("invoke cid={:?} {:?}", code, self.network_version());
         let ret = if let Some(ret) = {
             match actor::ActorVersion::from(self.network_version()) {
                 ActorVersion::V0 => actorv0::invoke_code(&code, self, method_num, params),
