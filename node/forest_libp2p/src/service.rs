@@ -106,6 +106,7 @@ pub enum NetworkMessage {
 #[derive(Debug)]
 pub enum NetRPCMethods {
     NetAddrsListen(OneShotSender<(PeerId, Vec<Multiaddr>)>),
+    NetPeers(OneShotSender<Vec<(String, ())>>),
 }
 
 /// The Libp2pService listens to events from the Libp2p swarm.
@@ -187,6 +188,7 @@ where
         let mut interval = stream::interval(Duration::from_secs(15)).fuse();
         let pubsub_block_str = format!("{}/{}", PUBSUB_BLOCK_STR, self.network_name);
         let pubsub_msg_str = format!("{}/{}", PUBSUB_MSG_STR, self.network_name);
+
 
         loop {
             select! {
@@ -307,6 +309,7 @@ where
                             swarm_stream.get_mut().send_hello_request(&peer_id, request, response_channel);
                         }
                         NetworkMessage::ChainExchangeRequest { peer_id, request, response_channel } => {
+                            info!("network event receing chan exchange request");
                             swarm_stream.get_mut().send_chain_exchange_request(&peer_id, request, response_channel);
                         }
                         NetworkMessage::BitswapRequest { cid, response_channel } => {
@@ -325,6 +328,14 @@ where
                                 let peer_id = Swarm::local_peer_id(swarm_stream.get_mut());
                                     if response_channel.send((*peer_id, listeners)).is_err() {
                                         warn!("Failed to get Libp2p listeners");
+                                    }
+                                }
+                                NetRPCMethods::NetPeers(response_channel) => {
+                                    let peers = swarm_stream.get_mut().peers().iter().map(|peer_id| {
+                                            (peer_id.to_string(), ())
+                                        }).collect::<Vec<(String, ())>>();
+                                    if response_channel.send(peers).is_err() {
+                                        warn!("Failed to get Libp2p peers");
                                     }
                                 }
                             }

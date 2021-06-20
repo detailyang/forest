@@ -177,7 +177,7 @@ where
     pub fn new(store: &'db S, version: StateTreeVersion) -> Result<Self, Box<dyn StdError>> {
         let info = match version {
             StateTreeVersion::V0 => None,
-            StateTreeVersion::V1 | StateTreeVersion::V2 | StateTreeVersion::V3 => {
+            StateTreeVersion::V1 | StateTreeVersion::V2 | StateTreeVersion::V3 | StateTreeVersion::V4 => {
                 Some(store.put(&StateInfo0::default(), Blake2b256)?)
             }
         };
@@ -210,7 +210,9 @@ where
             StateTreeVersion::V0
             | StateTreeVersion::V1
             | StateTreeVersion::V2
-            | StateTreeVersion::V3 => {
+            | StateTreeVersion::V3
+            | StateTreeVersion::V4 => {
+                println!("version ccc {:?} {:?} {:?}", version, info, actors);
                 let hamt = Map::load(&actors, store, version.into())?;
 
                 Ok(Self {

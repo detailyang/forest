@@ -145,7 +145,7 @@ impl PeerManager {
 
     /// Logs a success for the given peer, and updates the average request duration.
     pub async fn log_success(&self, peer: PeerId, dur: Duration) {
-        debug!("logging success for {:?}", peer);
+        log::info!("logging success for {:?}", peer);
         let mut peers = self.peers.write().await;
         peers.bad_peers.remove(&peer);
         let peer_stats = peers.full_peers.entry(peer).or_default();

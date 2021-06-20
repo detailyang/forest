@@ -133,6 +133,7 @@ pub(super) async fn start(config: Config) {
         .await
         .unwrap();
 
+    println!("networkname: {:?} gensis blocks {:?}", network_name, genesis.cids());
     let validate_height = if config.snapshot { None } else { Some(0) };
     // Sync from snapshot
     if let Some(path) = &config.snapshot_path {

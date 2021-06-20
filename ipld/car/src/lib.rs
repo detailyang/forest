@@ -92,8 +92,8 @@ where
 /// IPLD Block
 #[derive(Clone, Debug)]
 pub struct Block {
-    cid: Cid,
-    data: Vec<u8>,
+    pub cid: Cid,
+    pub data: Vec<u8>,
 }
 
 /// Loads a CAR buffer into a BlockStore
@@ -107,6 +107,7 @@ where
     // Batch write key value pairs from car file
     let mut buf: Vec<(Vec<u8>, Vec<u8>)> = Vec::with_capacity(100);
     while let Some(block) = car_reader.next_block().await? {
+        println!("put genesis cid {:?} {}", block.cid, hex::encode(&block.data));
         buf.push((block.cid.to_bytes(), block.data));
         if buf.len() > 1000 {
             s.bulk_write(&buf)

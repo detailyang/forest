@@ -17,7 +17,7 @@ use forest_libp2p::{
 use futures::channel::oneshot::channel as oneshot_channel;
 use ipld_blockstore::BlockStore;
 use libp2p::core::PeerId;
-use log::{trace, warn};
+use log::{trace, info, warn};
 use std::convert::TryFrom;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -107,6 +107,7 @@ where
             .handle_chain_exchange_request(peer_id, tsk, 1, HEADERS | MESSAGES)
             .await?;
 
+        log::info!("exchange requerst fts{:?}", fts.len());
         if fts.len() != 1 {
             return Err(format!(
                 "Full tipset request returned {} tipsets",
@@ -183,6 +184,7 @@ where
                 // a request succeeds.
                 let peers = self.peer_manager.top_peers_shuffled().await;
                 let mut res = None;
+                info!("asking peers to to chain exchange request {:?}", peers.len());
                 for p in peers.into_iter() {
                     match self.chain_exchange_request(p, request.clone()).await {
                         Ok(bs_res) => match bs_res.into_result() {
@@ -223,7 +225,7 @@ where
         peer_id: PeerId,
         request: ChainExchangeRequest,
     ) -> Result<ChainExchangeResponse, String> {
-        trace!("Sending ChainExchange Request {:?} to {}", request, peer_id);
+        info!("Sending ChainExchange Request {:?} to {}", request, peer_id);
 
         let req_pre_time = SystemTime::now();
 
@@ -241,6 +243,7 @@ where
             return Err("Failed to send chain exchange request to network".to_string());
         };
 
+        info!("wait request response rpc timeout");
         // Add timeout to receiving response from p2p service to avoid stalling.
         // There is also a timeout inside the request-response calls, but this ensures this.
         let res = future::timeout(Duration::from_secs(RPC_TIMEOUT), rx).await;

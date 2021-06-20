@@ -310,7 +310,7 @@ where
         source: PeerId,
         network: SyncNetworkContext<DB>,
     ) -> Result<FullTipset, ChainMuxerError> {
-        debug!(
+        info!(
             "Received block over GossipSub: {} height {} from {}",
             block.header.cid(),
             block.header.epoch(),
@@ -365,6 +365,11 @@ where
     ) -> Result<Option<(FullTipset, PeerId)>, ChainMuxerError> {
         let (tipset, source) = match event {
             NetworkEvent::HelloRequest { request, source } => {
+                if genesis.cids()[0].ne(&request.genesis_hash) {
+                    info!("ignore because the genesis not equal {:?} {:?}", source, request.genesis_hash);
+                    return Ok(None);
+                }
+                info!("receive hello request from {:?}", source);
                 let tipset_keys = TipsetKeys::new(request.heaviest_tip_set);
                 let tipset = match Self::get_full_tipset(
                     network.clone(),
@@ -376,7 +381,7 @@ where
                 {
                     Ok(tipset) => tipset,
                     Err(why) => {
-                        debug!("Querying full tipset failed: {}", why);
+                        error!("Querying full tipset failed: {}", why);
                         return Err(why);
                     }
                 };
@@ -417,6 +422,7 @@ where
             },
             // Not supported.
             NetworkEvent::ChainExchangeRequest { .. } | NetworkEvent::BitswapBlock { .. } => {
+                info!("chain exchange bitswap block");
                 return Ok(None);
             }
         };

@@ -22,7 +22,7 @@ use chain_sync::{BadBlockCache, SyncState};
 use cid::{json::CidJson, Cid};
 use clock::ChainEpoch;
 use fil_types::{json::SectorInfoJson, sector::post::json::PoStProofJson};
-use forest_libp2p::{Multiaddr, NetworkMessage};
+use forest_libp2p::{Multiaddr, NetworkMessage, PeerId};
 use ipld::json::IpldJson;
 use message::{
     message_receipt::json::MessageReceiptJson, signed_message,
@@ -212,4 +212,11 @@ pub struct AddrInfo {
     #[serde(rename = "ID")]
     pub id: String,
     pub addrs: Vec<Multiaddr>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct PeersInfo {
+    // holds the set of PeerId and MultiAddr
+    pub peers: Vec<(String, ())>,
 }

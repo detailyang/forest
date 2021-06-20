@@ -40,7 +40,14 @@ pub trait BlockStore: Store {
         T: DeserializeOwned,
     {
         match self.get_bytes(cid)? {
-            Some(bz) => Ok(Some(from_slice(&bz)?)),
+            Some(bz) => {
+                println!("cid {:?} {}", cid, hex::encode(&bz));
+                let node = from_slice(&bz).map_err(|err| {
+                    println!("parse err {:?}: {}", err, hex::encode(&bz));
+                    err
+                })?;
+                Ok(Some(node))
+            },
             None => Ok(None),
         }
     }
@@ -97,4 +104,11 @@ impl BlockStore for RocksDb {
 
         Ok(cids)
     }
+}
+
+#[test]
+fn test_xx() {
+    let x = vec![0u8];
+    let y = from_slice(&x);
+    println!("{:?}", y);
 }

@@ -119,7 +119,12 @@ where
 
     /// Gets actor from given [Cid], if it exists.
     pub fn get_actor(&self, addr: &Address, state_cid: &Cid) -> Result<Option<ActorState>, Error> {
-        let state = StateTree::new_from_root(self.blockstore(), state_cid)?;
+        println!("start state_cid: {:?}", state_cid);
+        let state = StateTree::new_from_root(self.blockstore(), state_cid).map_err(|e| {
+            println!("meet the error {:?}", e);
+            e
+        })?;
+        println!("start end");
         Ok(state.get_actor(addr)?)
     }
 

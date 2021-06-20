@@ -8,7 +8,7 @@ use beacon::Beacon;
 use blockstore::BlockStore;
 use forest_libp2p::{NetRPCMethods, NetworkMessage};
 use rpc_api::{
-    data_types::{AddrInfo, RPCState},
+    data_types::{AddrInfo, PeersInfo, RPCState},
     net_api::*,
 };
 
@@ -27,5 +27,22 @@ pub(crate) async fn net_addrs_listen<
     Ok(AddrInfo {
         id: id.to_string(),
         addrs,
+    })
+}
+
+pub(crate) async fn net_peers<
+    DB: BlockStore + Send + Sync + 'static,
+    B: Beacon + Send + Sync + 'static,
+>(
+    data: Data<RPCState<DB, B>>,
+) -> Result<NetPeersResult, JsonRpcError> {
+    let (tx, rx) = oneshot::channel();
+    let req = NetworkMessage::JSONRPCRequest {
+        method: NetRPCMethods::NetPeers(tx),
+    };
+    data.network_send.send(req).await?;
+    let peers = rx.await?;
+    Ok(PeersInfo {
+        peers,
     })
 }

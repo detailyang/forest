@@ -38,7 +38,7 @@ where
             process_car(reader, state_manager.chain_store()).await?
         }
         None => {
-            debug!("No specified genesis in config. Using default genesis.");
+            info!("No specified genesis in config. Using default genesis.");
             let reader = BufReader::<&[u8]>::new(DEFAULT_GENESIS);
             process_car(reader, state_manager.chain_store()).await?
         }

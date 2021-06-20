@@ -114,6 +114,7 @@ pub static ACCESS_MAP: Lazy<HashMap<&str, Access>> = Lazy::new(|| {
 
     // Net API
     access.insert(net_api::NET_ADDRS_LISTEN, Access::Read);
+    access.insert(net_api::NET_PEERS, Access::Read);
 
     access
 });
@@ -504,9 +505,13 @@ pub mod common_api {
 
 /// Net API
 pub mod net_api {
-    use crate::data_types::AddrInfo;
+    use crate::data_types::{AddrInfo, PeersInfo};
 
     pub const NET_ADDRS_LISTEN: &str = "Filecoin.NetAddrsListen";
     pub type NetAddrsListenParams = ();
     pub type NetAddrsListenResult = AddrInfo;
+
+    pub const NET_PEERS: &str = "Filecoin.NetPeers";
+    pub type NetPeersParams = ();
+    pub type NetPeersResult = PeersInfo;
 }

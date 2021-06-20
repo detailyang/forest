@@ -51,7 +51,9 @@ where
     where
         D: Deserializer<'de>,
     {
+        println!("11111");
         let (bitfield, pointers) = Deserialize::deserialize(deserializer)?;
+        println!("22222");
         Ok(Node {
             bitfield,
             pointers,

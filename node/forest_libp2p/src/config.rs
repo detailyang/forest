@@ -23,6 +23,8 @@ pub struct Libp2pConfig {
 
 impl Default for Libp2pConfig {
     fn default() -> Self {
+        println!("default bootstrap: {:?}", DEFAULT_BOOTSTRAP);
+
         let bootstrap_peers = DEFAULT_BOOTSTRAP
             .iter()
             .map(|node| node.parse().unwrap())

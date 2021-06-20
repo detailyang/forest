@@ -162,6 +162,7 @@ where
             .with_method(VERSION, version)
             // Net API
             .with_method(NET_ADDRS_LISTEN, net_api::net_addrs_listen::<DB, B>)
+            .with_method(NET_PEERS, net_api::net_peers::<DB, B>)
             .finish_unwrapped(),
     );
 

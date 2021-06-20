@@ -45,6 +45,7 @@ use networks::{get_network_version_default, BLOCK_DELAY_SECS, UPGRADE_SMOKE_HEIG
 use state_manager::Error as StateManagerError;
 use state_manager::StateManager;
 use state_tree::StateTree;
+use std::hash::Hash;
 
 const MAX_TIPSETS_TO_REQUEST: u64 = 100;
 
@@ -755,6 +756,7 @@ fn sync_tipset_range<
     genesis: Arc<Tipset>,
 ) -> TipsetRangeSyncerFuture {
     Box::pin(async move {
+        info!("ready sync head {:?} from {:?}", proposed_head.epoch(), current_head.epoch());
         tracker
             .write()
             .await
@@ -808,7 +810,7 @@ fn sync_tipset_range<
         tracker.write().await.set_stage(SyncStage::Complete);
 
         // At this point the head is synced and it can be set in the store as the heaviest
-        debug!(
+        info!(
             "Tipset range successfully verified: EPOCH = [{}, {}], HEAD_KEY = {:?}",
             proposed_head.epoch(),
             current_head.epoch(),
@@ -836,6 +838,7 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
     chain_store: Arc<ChainStore<DB>>,
     network: SyncNetworkContext<DB>,
 ) -> Result<Vec<Arc<Tipset>>, TipsetRangeSyncerError> {
+    info!("proposed_head {:?} current_head{:?}", proposed_head.epoch(), current_head.epoch());
     let mut parent_blocks: Vec<Cid> = vec![];
     let mut parent_tipsets = Vec::with_capacity(tipset_range_length as usize + 1);
     parent_tipsets.push(proposed_head.clone());
@@ -868,6 +871,7 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
         // TODO: Tweak request window when socket frame is tested
         let epoch_diff = oldest_parent.epoch() - current_head.epoch();
         let window = min(epoch_diff, MAX_TIPSETS_TO_REQUEST as i64);
+        info!("fetch block window {:?}", window);
         let network_tipsets = network
             .chain_exchange_headers(None, oldest_parent.parents(), window as u64)
             .await

@@ -37,7 +37,7 @@ use libp2p::NetworkBehaviour;
 use libp2p::{core::identity::Keypair, kad::QueryId};
 use libp2p::{core::PeerId, gossipsub::GossipsubMessage};
 use libp2p_bitswap::{Bitswap, BitswapEvent, Priority};
-use log::{debug, trace, warn};
+use log::{debug, info, trace, warn};
 use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::error::Error;
@@ -243,7 +243,7 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<HelloRequest, HelloRespon
                         .try_into()
                         .expect("System time since unix epoch should not exceed u64");
 
-                    debug!("Received hello request: {:?}", request);
+                    info!("Received hello request: peer={:?} genesis={:?}", peer, request.genesis_hash);
                     let sent = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .expect("System time before unix epoch")
@@ -342,12 +342,14 @@ impl NetworkBehaviourEventProcess<RequestResponseEvent<ChainExchangeRequest, Cha
                     request_id,
                     response,
                 } => {
+                    info!("receive request response message: {:?}", request_id);
                     let tx = self.cx_request_table.remove(&request_id);
 
                     // Send the sucessful response through channel out.
                     if let Some(tx) = tx {
+                        info!("send back response message: {:?}", request_id);
                         if tx.send(Ok(response)).is_err() {
-                            warn!("RPCResponse receive timed out")
+                            warn!("RPCResponse receive timed out: {:?}", request_id)
                         }
                     } else {
                         warn!("RPCResponse receive failed: channel not found");
@@ -519,6 +521,7 @@ impl ForestBehaviour {
         response_channel: OneShotSender<Result<ChainExchangeResponse, RequestResponseError>>,
     ) {
         let req_id = self.chain_exchange.send_request(peer_id, request);
+        info!("send to peer chain exchange request and insert tx to table : {:?}", req_id);
         self.cx_request_table.insert(req_id, response_channel);
     }
 
