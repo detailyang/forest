@@ -300,7 +300,7 @@ where
             }
 
             // Entry does not have state computed yet, this task will fill entry if successful.
-            debug!("calculating tipset state {:?}", tipset.cids());
+            info!("calculating tipset state {:?}", tipset.cids());
 
             let cid_pair = if tipset.epoch() == 0 {
                 // NB: This is here because the process that executes blocks requires that the

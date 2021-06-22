@@ -128,3 +128,10 @@ pub async fn beacon_schedule_default(
     }
     Ok(points)
 }
+
+#[test]
+fn test_netwokr_version() {
+    let epoch4 = ChainEpoch(4);
+    let network = get_network_version_default(epoch4);
+    println!("network {:?}", network);
+}

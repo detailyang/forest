@@ -339,7 +339,7 @@ where
     type Output = Result<(), TipsetProcessorError>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context) -> Poll<Self::Output> {
-        trace!("Polling TipsetProcessor");
+        info!("Polling TipsetProcessor");
 
         // TODO: Determine if polling the tipset stream before the state machine
         //       introduces a DOS attack vector where peers send duplicate, valid tipsets over
@@ -760,6 +760,8 @@ fn sync_tipset_range<
             .await
             .init(proposed_head.clone(), current_head.clone());
 
+        info!("sync_tipset_range {:?} {:?}", proposed_head.epoch(), current_head.epoch());
+
         let parent_tipsets = match sync_headers_in_reverse(
             tracker.clone(),
             tipset_range_length,
@@ -788,6 +790,7 @@ fn sync_tipset_range<
 
         //  Sync and validate messages from the tipsets
         tracker.write().await.set_stage(SyncStage::Messages);
+        info!("validate messages");
         if let Err(why) = sync_messages_check_state::<_, _, V>(
             tracker.clone(),
             state_manager,
@@ -836,6 +839,7 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
     chain_store: Arc<ChainStore<DB>>,
     network: SyncNetworkContext<DB>,
 ) -> Result<Vec<Arc<Tipset>>, TipsetRangeSyncerError> {
+    info!("sync_headers_in_reserver {:?} {:?}", proposed_head.epoch(), current_head.epoch());
     let mut parent_blocks: Vec<Cid> = vec![];
     let mut parent_tipsets = Vec::with_capacity(tipset_range_length as usize + 1);
     parent_tipsets.push(proposed_head.clone());
@@ -860,6 +864,7 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
         }
         // Attempt to load the parent tipset from local store
         if let Ok(tipset) = chain_store.tipset_from_keys(oldest_parent.parents()).await {
+            info!("chainstore has load {:?}", tipset.epoch());
             parent_blocks.extend_from_slice(tipset.cids());
             parent_tipsets.push(tipset);
             continue;
@@ -867,19 +872,25 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
 
         // TODO: Tweak request window when socket frame is tested
         let epoch_diff = oldest_parent.epoch() - current_head.epoch();
+        info!("curren epoch diff {:?} {:?} {:?}", epoch_diff, oldest_parent.epoch(), current_head.epoch());
         let window = min(epoch_diff, MAX_TIPSETS_TO_REQUEST as i64);
+        info!("ask peers to get headers {:?}", window);
         let network_tipsets = network
             .chain_exchange_headers(None, oldest_parent.parents(), window as u64)
             .await
             .map_err(TipsetRangeSyncerError::NetworkTipsetQueryFailed)?;
 
         for tipset in network_tipsets {
+            info!("get tipset {:?}", tipset.epoch());
             // Break if have already traversed the entire tipset range
             if tipset.epoch() < current_head.epoch() {
                 break 'sync;
             }
+
+            info!("validate tipset");
             validate_tipset_against_cache(bad_block_cache.clone(), &tipset.key(), &parent_blocks)
                 .await?;
+            info!("validate tipset done");
             parent_blocks.extend_from_slice(tipset.cids());
             tracker.write().await.set_epoch(tipset.epoch());
             parent_tipsets.push(tipset);
@@ -937,6 +948,7 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
                 .await?;
         }
     }
+    info!("done {:?}", parent_tipsets.len());
     Ok(parent_tipsets)
 }
 
@@ -1015,9 +1027,11 @@ async fn sync_messages_check_state<
     const REQUEST_WINDOW: usize = 1;
 
     while let Some(tipset) = tipset_iter.next() {
+        info!("ready check message {:?}", tipset.epoch());
         match chainstore.fill_tipset(&tipset) {
             Some(full_tipset) => {
                 let current_epoch = full_tipset.epoch();
+                info!("check current epcoh  {:?}", current_epoch);
                 validate_tipset::<_, _, V>(
                     state_manager.clone(),
                     beacon_scheduler.clone(),
@@ -1028,6 +1042,7 @@ async fn sync_messages_check_state<
                     invalid_block_strategy,
                 )
                 .await?;
+                info!("check current epcoh done {:?}", current_epoch);
                 tracker.write().await.set_epoch(current_epoch);
             }
             None => {
@@ -1169,7 +1184,7 @@ async fn validate_block<
     beacon_schedule: Arc<BeaconSchedule<TBeacon>>,
     block: Arc<Block>,
 ) -> Result<Arc<Block>, (Cid, TipsetRangeSyncerError)> {
-    trace!(
+    log::info!(
         "Validating block: epoch = {}, weight = {}, key = {}",
         block.header().epoch(),
         block.header().weight(),
@@ -1181,7 +1196,7 @@ async fn validate_block<
     // Check block validation cache in store
     let is_validated = chain_store
         .is_block_validated(block_cid)
-        .map_err(|why| (*block_cid, why.into()))?;
+        .expect("is_block_validated");
     if is_validated {
         return Ok(block);
     }
@@ -1190,7 +1205,7 @@ async fn validate_block<
     let header = block.header();
 
     // Check to ensure all optional values exist
-    block_sanity_checks(&header).map_err(|e| (*block_cid, e))?;
+    block_sanity_checks(&header).expect("blocks_sanity_checks");
 
     let base_tipset = chain_store
         .tipset_from_keys(header.parents())
@@ -1207,12 +1222,13 @@ async fn validate_block<
             )
         })?;
     let win_p_nv = state_manager.get_network_version(base_tipset.epoch());
+    info!("network {:?} epoch {:?}", win_p_nv, header.epoch());
 
     // Retrieve lookback tipset for validation
     let (lookback_tipset, lookback_state) = state_manager
         .get_lookback_tipset_for_round::<V>(base_tipset.clone(), block.header().epoch())
         .await
-        .map_err(|e| (*block_cid, e.into()))?;
+        .expect("get_lookback_tipset_for_round");
     let lookback_state = Arc::new(lookback_state);
     let prev_beacon = chain_store
         .latest_beacon_entry(&base_tipset)
@@ -1250,7 +1266,7 @@ async fn validate_block<
     // to do sync to avoid duplication
     let work_addr = state_manager
         .get_miner_work_addr(&lookback_state, header.miner_address())
-        .map_err(|e| (*block_cid, e.into()))?;
+        .expect("get_miner_work_addr");
 
     // Async validations
 
@@ -1259,6 +1275,7 @@ async fn validate_block<
     let v_base_tipset = Arc::clone(&base_tipset);
     let v_state_manager = Arc::clone(&state_manager);
     validations.push(task::spawn_blocking(move || {
+        info!("Check block messages");
         check_block_messages::<_, V>(v_state_manager, &v_block, &v_base_tipset)
             .map_err(|e| TipsetRangeSyncerError::Validation(e.to_string()))
     }));
@@ -1268,6 +1285,7 @@ async fn validate_block<
     let v_block = Arc::clone(&block);
     let v_base_tipset = Arc::clone(&base_tipset);
     validations.push(task::spawn_blocking(move || {
+        info!("Miner validations");
         let headers = v_block.header();
         validate_miner(
             &v_state_manager,
@@ -1281,13 +1299,14 @@ async fn validate_block<
     let v_block_store = state_manager.blockstore_cloned();
     let v_block = Arc::clone(&block);
     validations.push(task::spawn_blocking(move || {
+        info!("Base fee check");
         let base_fee =
             chain::compute_base_fee(v_block_store.as_ref(), &v_base_tipset).map_err(|e| {
                 TipsetRangeSyncerError::Validation(format!(
                     "Could not compute base fee: {}",
                     e.to_string()
                 ))
-            })?;
+            }).expect("compute_base_fee");
         let parent_base_fee = v_block.header.parent_base_fee();
         if &base_fee != parent_base_fee {
             return Err(TipsetRangeSyncerError::Validation(format!(
@@ -1303,9 +1322,8 @@ async fn validate_block<
     let v_base_tipset = Arc::clone(&base_tipset);
     let weight = header.weight().clone();
     validations.push(task::spawn_blocking(move || {
-        let calc_weight = chain::weight(v_block_store.as_ref(), &v_base_tipset).map_err(|e| {
-            TipsetRangeSyncerError::Calculation(format!("Error calculating weight: {}", e))
-        })?;
+        info!("Parent weight calculation check");
+        let calc_weight = chain::weight(v_block_store.as_ref(), &v_base_tipset).expect("weight");
         if weight != calc_weight {
             return Err(TipsetRangeSyncerError::Validation(format!(
                 "Parent weight doesn't match: {} (header), {} (computed)",
@@ -1320,13 +1338,12 @@ async fn validate_block<
     let v_base_tipset = Arc::clone(&base_tipset);
     let v_block = Arc::clone(&block);
     validations.push(task::spawn(async move {
+        info!("State root and receipt root validations");
         let header = v_block.header();
         let (state_root, receipt_root) = v_state_manager
             .tipset_state::<V>(&v_base_tipset)
             .await
-            .map_err(|e| {
-                TipsetRangeSyncerError::Calculation(format!("Failed to calculate state: {}", e))
-            })?;
+            .expect("tipset_state");
         if &state_root != header.state_root() {
             return Err(TipsetRangeSyncerError::Validation(format!(
                 "Parent state root did not match computed state: {} (header), {} (computed)",
@@ -1351,6 +1368,7 @@ async fn validate_block<
     let v_state_manager = Arc::clone(&state_manager);
     let v_lookback_state = lookback_state.clone();
     validations.push(task::spawn_blocking(move || {
+        info!("Winner election PoSt validations");
         let header = v_block.header();
 
         // Safe to unwrap because checked to `Some` in sanity check
@@ -1364,7 +1382,7 @@ async fn validate_block<
             header.miner_address(),
             &v_base_tipset,
             &lookback_tipset,
-        )?;
+        ).expect("eligible_to_mine");
         if !hp {
             return Err(TipsetRangeSyncerError::MinerNotEligibleToMine);
         }
@@ -1376,16 +1394,16 @@ async fn validate_block<
             header.epoch(),
             &miner_address_buf,
         )
-        .map_err(|e| TipsetRangeSyncerError::DrawingChainRandomness(e.to_string()))?;
-        verify_election_post_vrf(&work_addr, &vrf_base, election_proof.vrfproof.as_bytes())?;
+        .map_err(|e| TipsetRangeSyncerError::DrawingChainRandomness(e.to_string())).expect("draw_randomness");
+        verify_election_post_vrf(&work_addr, &vrf_base, election_proof.vrfproof.as_bytes()).expect("verify_election_post_vrf");
 
         if v_state_manager
-            .is_miner_slashed(header.miner_address(), &v_base_tipset.parent_state())?
+            .is_miner_slashed(header.miner_address(), &v_base_tipset.parent_state()).expect("is_miner_slashed")
         {
             return Err(TipsetRangeSyncerError::InvalidOrSlashedMiner);
         }
         let (mpow, tpow) = v_state_manager
-            .get_power(&v_lookback_state, Some(header.miner_address()))?
+            .get_power(&v_lookback_state, Some(header.miner_address())).expect("get_power")
             .ok_or(TipsetRangeSyncerError::MinerPowerNotAvailable)?;
 
         let j = election_proof.compute_win_count(&mpow.quality_adj_power, &tpow.quality_adj_power);
@@ -1402,7 +1420,8 @@ async fn validate_block<
     // Block signature check
     let v_block = Arc::clone(&block);
     validations.push(task::spawn_blocking(move || {
-        v_block.header().check_block_signature(&work_addr)?;
+        info!("Block signature check");
+        v_block.header().check_block_signature(&work_addr).expect("check_block_signature");
         Ok(())
     }));
 
@@ -1412,16 +1431,13 @@ async fn validate_block<
         let parent_epoch = base_tipset.epoch();
         let v_prev_beacon = Arc::clone(&prev_beacon);
         validations.push(task::spawn(async move {
+            info!("Beacon values check");
             v_block
                 .header()
                 .validate_block_drand(beacon_schedule.as_ref(), parent_epoch, &v_prev_beacon)
                 .await
-                .map_err(|e| {
-                    TipsetRangeSyncerError::Validation(format!(
-                        "Failed to validate blocks random beacon values: {}",
-                        e
-                    ))
-                })
+                .expect("validate_block_drand");
+                Ok(())
         }));
     }
 
@@ -1430,7 +1446,7 @@ async fn validate_block<
     let v_prev_beacon = Arc::clone(&prev_beacon);
     validations.push(task::spawn_blocking(move || {
         let header = v_block.header();
-        let mut miner_address_buf = header.miner_address().marshal_cbor()?;
+        let mut miner_address_buf = header.miner_address().marshal_cbor().expect("marshal_cbor");
 
         if header.epoch() > UPGRADE_SMOKE_HEIGHT {
             let vrf_proof = base_tipset
@@ -1451,12 +1467,14 @@ async fn validate_block<
         )
         .map_err(|e| TipsetRangeSyncerError::DrawingChainRandomness(e.to_string()))?;
 
+        info!("Ticket election proof validations");
         verify_election_post_vrf(
             &work_addr,
             &vrf_base,
             // Safe to unwrap here because of block sanity checks
             header.ticket().as_ref().unwrap().vrfproof.as_bytes(),
-        )?;
+        ).expect("verify_election_post_vrf");
+        info!("Ticket election proof done");
 
         Ok(())
     }));
@@ -1465,13 +1483,14 @@ async fn validate_block<
     let v_block = block.clone();
     let v_prev_beacon = Arc::clone(&prev_beacon);
     validations.push(task::spawn_blocking(move || {
+        info!("PoSt proof validation");
         verify_winning_post_proof::<_, V>(
             &state_manager,
             win_p_nv,
             v_block.header(),
             &v_prev_beacon,
             &lookback_state,
-        )?;
+        ).expect("verify_winning_post_proof");
         Ok(())
     }));
 
