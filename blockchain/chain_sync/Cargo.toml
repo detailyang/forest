@@ -11,11 +11,11 @@ amt = { package = "ipld_amt", version = "0.2" }
 hamt = { package = "ipld_hamt", path = "../../ipld/hamt" }
 blocks = { package = "forest_blocks", path = "../blocks", features = ["json"] }
 beacon = { path = "../beacon" }
-db = { package = "forest_db", version = "0.1" }
+db = { package = "forest_db", version = "0.1" , features = ["rocksdb"]}
 encoding = { package = "forest_encoding", version = "0.2.1" }
 libp2p = { version = "0.35", default-features = false }
 cid = { package = "forest_cid", version = "0.3" }
-ipld_blockstore = "0.1"
+ipld_blockstore = { version = "0.1", features=["rocksdb"]}
 chain = { path = "../chain" }
 message = { package = "forest_message", version = "0.7", features = ["proofs", "blst"] }
 state_tree = { path = "../../vm/state_tree/" }

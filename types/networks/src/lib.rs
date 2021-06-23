@@ -15,17 +15,7 @@ mod mainnet;
 #[cfg(feature = "mainnet")]
 pub use self::mainnet::*;
 
-#[cfg(all(
-    feature = "interopnet",
-    not(feature = "devnet"),
-    not(feature = "mainnet")
-))]
 mod interopnet;
-#[cfg(all(
-    feature = "interopnet",
-    not(feature = "devnet"),
-    not(feature = "mainnet")
-))]
 pub use self::interopnet::*;
 
 #[cfg(all(
@@ -42,7 +32,8 @@ mod devnet;
 pub use self::devnet::*;
 
 /// Defines the different hard fork parameters.
-struct Upgrade {
+#[derive(Debug)]
+pub struct Upgrade {
     /// When the hard fork will happen
     height: ChainEpoch,
     /// The version of the fork
@@ -54,7 +45,7 @@ struct DrandPoint<'a> {
     pub config: &'a DrandConfig<'a>,
 }
 
-const VERSION_SCHEDULE: [Upgrade; 12] = [
+pub const VERSION_SCHEDULE: [Upgrade; 12] = [
     Upgrade {
         height: UPGRADE_BREEZE_HEIGHT,
         network: NetworkVersion::V1,
@@ -110,9 +101,10 @@ pub fn get_network_version_default(epoch: ChainEpoch) -> NetworkVersion {
     VERSION_SCHEDULE
         .iter()
         .rev()
+        .filter(|u| u.height > 0)
         .find(|upgrade| epoch > upgrade.height)
         .map(|upgrade| upgrade.network)
-        .unwrap_or(NetworkVersion::V0)
+        .unwrap_or(NetworkVersion::V13)
 }
 
 /// Constructs a drand beacon schedule based on the build config.

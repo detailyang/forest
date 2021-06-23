@@ -705,11 +705,16 @@ where
         V: ProofVerifier,
         CB: FnMut(&Cid, &ChainMessage, &ApplyRet) -> Result<(), String> + Send,
     {
+
         span!("compute_tipset_state", {
             let block_headers = tipset.blocks();
             let first_block = block_headers
                 .first()
                 .ok_or_else(|| Error::Other("Empty tipset in compute_tipset_state".to_string()))?;
+
+            // block_headers.iter().for_each(|b| {
+            //   println!("tipset block header {:?}", b);
+            // });
 
             let check_for_duplicates = |s: &BlockHeader| {
                 block_headers

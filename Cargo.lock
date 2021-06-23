@@ -2062,6 +2062,7 @@ dependencies = [
  "chain",
  "chain_sync",
  "ctrlc",
+ "fil_clock",
  "fil_types",
  "forest_address",
  "forest_bigint",

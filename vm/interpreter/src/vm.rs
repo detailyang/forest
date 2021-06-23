@@ -203,9 +203,12 @@ where
         let mut receipts = Vec::new();
         let mut processed = HashSet::<Cid>::default();
 
+        log::info!("apply block message {:?} {:?}", parent_epoch, epoch);
         for i in parent_epoch..epoch {
             if i > parent_epoch {
-                self.run_cron(epoch, callback.as_mut())?;
+                log::info!("run cron {:?}", i);
+                self.run_cron(i, callback.as_mut())?;
+                log::info!("run cron done {:?}", i);
             }
             if let Some(new_state) = self.migrate_state(i)? {
                 self.state = StateTree::new_from_root(self.store, &new_state)?

@@ -25,6 +25,11 @@ use rpassword::read_password;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::sync::Arc;
+use ipld_blockstore::BlockStore;
+use std::process::exit;
+use chain::Error::Cid;
+use std::str::FromStr;
+use networks::{get_network_version_default, VERSION_SCHEDULE};
 
 /// Starts daemon process
 pub(super) async fn start(config: Config) {
@@ -142,6 +147,21 @@ pub(super) async fn start(config: Config) {
     let (genesis, network_name) = initialize_genesis(config.genesis_file.as_ref(), &state_manager)
         .await
         .unwrap();
+
+    let c: cid::Cid = cid::Cid::from_str("bafy2bzacea2brbdwi3ros63s4iicrapwd3yd6eqvzfue2i55wgwjhnuskudmu").unwrap();
+    let block_header: blocks::BlockHeader = state_manager.blockstore().get(&c).unwrap().unwrap();
+    // println!("block_header:{:?} state_root{:?}", block_header, block_header.state_root());
+    println!("actrov5 {}", &*actor::actorv5::CRON_ACTOR_ADDR);
+    // let actor  = state_manager.get_actor(actor::cron::ADDRESS, block_header.state_root()).unwrap();
+    // println!("actor state {:?}", actor);
+    // exit(0);
+    VERSION_SCHEDULE.iter().for_each(|upgrade| {
+        println!("upgrade {:?}", upgrade);
+    });
+    for i in [0,1,2,3,4].iter() {
+        let n = get_network_version_default(*i as clock::ChainEpoch);
+        println!("epoch {:?} network {:?}", i, n);
+    }
 
     let validate_height = if config.snapshot { None } else { Some(0) };
     // Sync from snapshot

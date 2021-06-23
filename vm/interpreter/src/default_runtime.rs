@@ -389,12 +389,16 @@ where
         let to_actor = match self
             .state
             .get_actor(msg.to())
-            .map_err(|e| e.downcast_fatal("failed to get actor"))?
+            .map_err(|e| e.downcast_fatal("fuck failed to get actor"))?
         {
-            Some(act) => act,
+            Some(act) => {
+                // println!("nv{:?} found create actor {:?}", self.network_version(), act);
+                act
+            },
             None => {
                 // Try to create actor if not exist
                 let (to_actor, id_addr) = self.try_create_account_actor(msg.to())?;
+                // println!("nv{:?} not found and create actor {:?} {:?}", self.network_version(), to_actor, id_addr);
                 if self.network_version() > NetworkVersion::V3 {
                     // Update the receiver to the created ID address
                     self.vm_msg.receiver = id_addr;
@@ -429,14 +433,29 @@ where
         params: &Serialized,
         to: &Address,
     ) -> Result<Serialized, ActorError> {
-        println!("invoke cid={:?} {:?}", code, self.network_version());
+        // println!("invoke cid={:?} {:?}", code, self.network_version());
         let ret = if let Some(ret) = {
             match actor::ActorVersion::from(self.network_version()) {
-                ActorVersion::V0 => actorv0::invoke_code(&code, self, method_num, params),
-                ActorVersion::V2 => actorv2::invoke_code(&code, self, method_num, params),
-                ActorVersion::V3 => actorv3::invoke_code(&code, self, method_num, params),
-                ActorVersion::V4 => actorv4::invoke_code(&code, self, method_num, params),
-                ActorVersion::V5 => actorv5::invoke_code(&code, self, method_num, params),
+                ActorVersion::V0 => {
+                    // println!("zzzz0 {:?} {:?}", code, *actorv0::CRON_ACTOR_CODE_ID);
+                    actorv0::invoke_code(&code, self, method_num, params)
+                },
+                ActorVersion::V2 => {
+                    // println!("zzzz2 {:?} {:?}", code, *actorv0::CRON_ACTOR_CODE_ID);
+                    actorv2::invoke_code(&code, self, method_num, params)
+                },
+                ActorVersion::V3 => {
+                    // println!("zzzz3 {:?} {:?}", code, *actorv0::CRON_ACTOR_CODE_ID);
+                    actorv3::invoke_code(&code, self, method_num, params)
+                },
+                ActorVersion::V4 => {
+                    // println!("zzzz4 {:?} {:?}", code, *actorv0::CRON_ACTOR_CODE_ID);
+                    actorv4::invoke_code(&code, self, method_num, params)
+                },
+                ActorVersion::V5 => {
+                    // println!("zzzz5 {:?} {:?}", code, *actorv0::CRON_ACTOR_CODE_ID);
+                    actorv5::invoke_code(&code, self, method_num, params)
+                },
             }
         } {
             ret

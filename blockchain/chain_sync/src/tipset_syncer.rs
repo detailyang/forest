@@ -887,10 +887,8 @@ async fn sync_headers_in_reverse<DB: BlockStore + Sync + Send + 'static>(
                 break 'sync;
             }
 
-            info!("validate tipset");
             validate_tipset_against_cache(bad_block_cache.clone(), &tipset.key(), &parent_blocks)
                 .await?;
-            info!("validate tipset done");
             parent_blocks.extend_from_slice(tipset.cids());
             tracker.write().await.set_epoch(tipset.epoch());
             parent_tipsets.push(tipset);
@@ -1340,6 +1338,7 @@ async fn validate_block<
     validations.push(task::spawn(async move {
         info!("State root and receipt root validations");
         let header = v_block.header();
+        println!("epoch {:?} header={} message={}", header.epoch(), header.cid(), header.messages());
         let (state_root, receipt_root) = v_state_manager
             .tipset_state::<V>(&v_base_tipset)
             .await
