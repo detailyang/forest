@@ -229,6 +229,7 @@ where
         V: ProofVerifier,
         CB: FnMut(&Cid, &ChainMessage, &ApplyRet) -> Result<(), String>,
     {
+        println!("apply blocks {:?} {:?} {:?} {:?} {:?}", parent_epoch, p_state, messages.len(), epoch, tipset.cids().len());
         let mut buf_store = BufferedBlockStore::new(self.blockstore());
         let lb_wrapper = SMLookbackWrapper {
             sm: self,

@@ -11,6 +11,7 @@ mod tests {
     use fil_types::verifier::{ProofVerifier, MockVerifier};
     use std::marker::PhantomData;
     use ipld_blockstore::BlockStore;
+    use networks::UPGRADE_PLACEHOLDER_HEIGHT;
 
     struct My<V> {
         verifier: PhantomData<V>,
@@ -27,6 +28,7 @@ mod tests {
         }
 
         async fn _test_validate(&self) {
+            println!("{:?}", UPGRADE_PLACEHOLDER_HEIGHT);
             let db = db::rocks::RocksDb::open("/Users/didi/.forest/db").unwrap();
 
             let db = Arc::new(db);
@@ -61,15 +63,18 @@ mod tests {
 
             let headers: Vec<&blocks::BlockHeader> = parent_tipsets.iter().flat_map(|t| t.blocks()).collect();
 
-            for tipset in parent_tipsets.iter().rev().skip(1) {
+            for tipset in parent_tipsets.iter().rev().skip(80) {
+                if tipset.epoch() < 100 {
+                    continue;
+                }
                 let full = cs.fill_tipset(&tipset).unwrap();
                 for b in full.blocks().iter() {
-                    println!("block {:?}", b.header().epoch());
                     let header = b.header();
                     let base_tipset = cs
                         .tipset_from_keys(header.parents())
                         .await
                         .unwrap();
+                    println!("block {:?} parnet tipset {:?}", b.header().epoch(), base_tipset.cids());
                     let (state_root, receipt_root) = sm.tipset_state::<V>(&base_tipset)
                         .await
                         .expect("tipset_state");
@@ -89,6 +94,7 @@ mod tests {
                         return;
                     }
                     println!("epoch state ok {:?}", header.epoch());
+                    return;
                 }
             }
         }

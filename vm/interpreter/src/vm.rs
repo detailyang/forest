@@ -203,16 +203,16 @@ where
         let mut receipts = Vec::new();
         let mut processed = HashSet::<Cid>::default();
 
-        log::info!("apply block message {:?} {:?}", parent_epoch, epoch);
+        println!("apply block message {:?} {:?}", parent_epoch, epoch);
         for i in parent_epoch..epoch {
             if i > parent_epoch {
-                log::info!("run cron {:?}", i);
                 self.run_cron(i, callback.as_mut())?;
-                log::info!("run cron done {:?}", i);
+                let new_state = self.flush()?;
+                self.state = StateTree::new_from_root(self.store, &new_state)?;
+                println!("run {:?} {:?}", i, new_state);
             }
-            if let Some(new_state) = self.migrate_state(i)? {
-                self.state = StateTree::new_from_root(self.store, &new_state)?
-            }
+            // if let Some(new_state) = self.migrate_state(i)? {
+            // }
             self.epoch = i + 1;
         }
 
@@ -227,6 +227,7 @@ where
                     return Ok(());
                 }
                 let ret = self.apply_message(msg)?;
+                println!("apply message {:?} ret {:?}", cid, ret);
 
                 if let Some(cb) = &mut callback {
                     cb(&cid, msg, &ret)?;
@@ -246,6 +247,16 @@ where
                 process_msg(msg)?;
             }
 
+            let new_state = self.flush()?;
+            self.state = StateTree::new_from_root(self.store, &new_state)?;
+            println!("apply message root state {:?}", new_state);
+
+            println!("params {:?} {:?} {:?} {:?}",
+                block.miner,
+                penalty,
+                gas_reward,
+                block.win_count,
+            );
             // Generate reward transaction for the miner of the block
             let params = Serialized::serialize(AwardBlockRewardParams {
                 miner: block.miner,
@@ -276,6 +287,9 @@ where
                 )
                 .into());
             }
+            let new_state = self.flush()?;
+            self.state = StateTree::new_from_root(self.store, &new_state)?;
+            println!("apply implicit message root state {:?}", new_state);
 
             // This is more of a sanity check, this should not be able to be hit.
             if ret.msg_receipt.exit_code != ExitCode::Ok {
@@ -292,6 +306,9 @@ where
         }
 
         self.run_cron(epoch, callback.as_mut())?;
+        let new_state = self.flush()?;
+        self.state = StateTree::new_from_root(self.store, &new_state)?;
+        println!("final state {:?}", new_state);
         Ok(receipts)
     }
 

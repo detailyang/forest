@@ -14,14 +14,14 @@ pub mod system;
 use cid::Cid;
 use num_bigint::BigInt;
 
-pub const EPOCH_DURATION_SECONDS: clock::ChainEpoch = actorv0::EPOCH_DURATION_SECONDS;
-pub const EPOCHS_IN_DAY: clock::ChainEpoch = actorv0::EPOCHS_IN_DAY;
+pub const EPOCH_DURATION_SECONDS: clock::ChainEpoch = actorv5::EPOCH_DURATION_SECONDS;
+pub const EPOCHS_IN_DAY: clock::ChainEpoch = actorv5::EPOCHS_IN_DAY;
 
 // Aliases for common addresses
-pub static CHAOS_ACTOR_ADDR: &actorv0::CHAOS_ACTOR_ADDR = &actorv0::CHAOS_ACTOR_ADDR;
-pub static BURNT_FUNDS_ACTOR_ADDR: &actorv0::BURNT_FUNDS_ACTOR_ADDR =
-    &actorv0::BURNT_FUNDS_ACTOR_ADDR;
-pub static RESERVE_ADDRESS: &actorv0::RESERVE_ADDRESS = &actorv0::RESERVE_ADDRESS;
+pub static CHAOS_ACTOR_ADDR: &actorv5::CHAOS_ACTOR_ADDR = &actorv5::CHAOS_ACTOR_ADDR;
+pub static BURNT_FUNDS_ACTOR_ADDR: &actorv5::BURNT_FUNDS_ACTOR_ADDR =
+    &actorv5::BURNT_FUNDS_ACTOR_ADDR;
+pub static RESERVE_ADDRESS: &actorv5::RESERVE_ADDRESS = &actorv5::RESERVE_ADDRESS;
 
 /// Returns true if the code belongs to a builtin actor.
 pub fn is_builtin_actor(code: &Cid) -> bool {

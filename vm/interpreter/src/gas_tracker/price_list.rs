@@ -352,9 +352,13 @@ impl PriceList {
 
 /// Returns gas price list by Epoch for gas consumption.
 pub fn price_list_by_epoch(epoch: ChainEpoch) -> PriceList {
-    if epoch < UPGRADE_CALICO_HEIGHT {
+    // if 0 > UPGRADE_CALICO_HEIGHT {
+    //     if epoch < UPGRADE_CALICO_HEIGHT {
+    //         BASE_PRICES.clone()
+    //     } else {
+    //         CALICO_PRICES.clone()
+    //     }
+    // } else {
         BASE_PRICES.clone()
-    } else {
-        CALICO_PRICES.clone()
-    }
+    // }
 }
