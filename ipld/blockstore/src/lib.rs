@@ -41,9 +41,7 @@ pub trait BlockStore: Store {
     {
         match self.get_bytes(cid)? {
             Some(bz) => {
-                println!("cid {:?} {}", cid, hex::encode(&bz));
                 let node = from_slice(&bz).map_err(|err| {
-                    println!("parse err {:?}: {}", err, hex::encode(&bz));
                     err
                 })?;
                 Ok(Some(node))

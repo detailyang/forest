@@ -6,12 +6,14 @@ mod chain_cmd;
 mod config;
 mod fetch_params_cmd;
 mod genesis_cmd;
+mod wallet_cmd;
 
 pub(super) use self::auth_cmd::AuthCommands;
 pub(super) use self::chain_cmd::ChainCommands;
 pub use self::config::Config;
 pub(super) use self::fetch_params_cmd::FetchCommands;
 pub(super) use self::genesis_cmd::GenesisCommands;
+pub(super) use self::wallet_cmd::WalletCommands;
 
 use jsonrpc_v2::Error as JsonRpcError;
 use serde::Serialize;
@@ -59,6 +61,8 @@ pub enum Subcommand {
 
     #[structopt(name = "genesis", about = "Work with blockchain genesis")]
     Genesis(GenesisCommands),
+    #[structopt(name = "wallet", about = "Manage wallet")]
+    Wallet(WalletCommands),
 }
 
 /// Daemon process command line options.
@@ -103,6 +107,8 @@ pub struct DaemonOpts {
         help = "Amount of Peers we want to be connected to (default is 75)"
     )]
     pub target_peer_count: Option<u32>,
+    #[structopt(long, help = "Encrypt the keystore (default = true)")]
+    pub encrypt_keystore: Option<bool>,
 }
 
 impl DaemonOpts {
@@ -158,6 +164,9 @@ impl DaemonOpts {
         if let Some(tipset_sample_size) = self.tipset_sample_size {
             cfg.sync.tipset_sample_size = tipset_sample_size.into();
         }
+        if let Some(encrypt_keystore) = self.encrypt_keystore {
+            cfg.encrypt_keystore = encrypt_keystore;
+        }
 
         Ok(cfg)
     }
@@ -202,6 +211,11 @@ pub(super) fn handle_rpc_err(e: JsonRpcError) {
             process::exit(code as i32);
         }
     }
+}
+
+pub(super) fn cli_error_and_die(msg: &str, code: i32) {
+    println!("Error: {}", msg);
+    std::process::exit(code);
 }
 
 /// Prints a plain HTTP JSON-RPC response result
