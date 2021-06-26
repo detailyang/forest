@@ -34,9 +34,15 @@ where
         round: ChainEpoch,
         entropy: &[u8],
     ) -> Result<[u8; 32], Box<dyn Error>> {
-        task::block_on(
-            self.cs
-                .get_chain_randomness_looking_backward(&self.blks, pers, round, entropy),
+        task::block_on( async {
+                if round > networks::UPGRADE_PLACEHOLDER_HEIGHT {
+                    self.cs
+                        .get_chain_randomness_looking_forward(&self.blks, pers, round, entropy).await
+                } else {
+                    self.cs
+                        .get_chain_randomness_looking_backward(&self.blks, pers, round, entropy).await
+                }
+            }
         )
     }
 
