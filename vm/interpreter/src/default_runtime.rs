@@ -103,6 +103,8 @@ pub struct DefaultRuntime<'db, 'vm, BS, R, C, LB, V, P = DefaultNetworkParams> {
     circ_supply_calc: &'vm C,
     lb_state: &'vm LB,
 
+    base_fee: TokenAmount,
+
     verifier: PhantomData<V>,
     params: PhantomData<P>,
 }
@@ -123,6 +125,7 @@ where
         state: &'vm mut StateTree<'db, BS>,
         store: &'db BS,
         gas_used: i64,
+        base_fee: TokenAmount,
         message: &UnsignedMessage,
         epoch: ChainEpoch,
         origin: Address,
@@ -182,6 +185,7 @@ where
             registered_actors,
             circ_supply_calc,
             lb_state,
+            base_fee,
             allow_internal: true,
             caller_validated: false,
             params: PhantomData,
@@ -633,10 +637,15 @@ where
         rand_epoch: ChainEpoch,
         entropy: &[u8],
     ) -> Result<Randomness, ActorError> {
-        let r = self
-            .rand
-            .get_chain_randomness(personalization, rand_epoch, entropy)
-            .map_err(|e| e.downcast_fatal("could not get randomness"))?;
+        let r = if rand_epoch > networks::UPGRADE_PLACEHOLDER_HEIGHT {
+            self.rand
+                .get_chain_randomness_looking_forward(personalization, rand_epoch, entropy)
+                .map_err(|e| e.downcast_fatal("could not get randomness"))?
+        } else {
+            self.rand
+                .get_chain_randomness(personalization, rand_epoch, entropy)
+                .map_err(|e| e.downcast_fatal("could not get randomness"))?
+        };
 
         Ok(Randomness(r))
     }
@@ -647,11 +656,15 @@ where
         rand_epoch: ChainEpoch,
         entropy: &[u8],
     ) -> Result<Randomness, ActorError> {
-        let r = self
-            .rand
-            .get_beacon_randomness(personalization, rand_epoch, entropy)
-            .map_err(|e| e.downcast_fatal("could not get randomness"))?;
-
+        let r = if rand_epoch > networks::UPGRADE_PLACEHOLDER_HEIGHT {
+            self.rand
+                .get_beacon_randomness_looking_forward(personalization, rand_epoch, entropy)
+                .map_err(|e| e.downcast_fatal("could not get randomness"))?
+        } else {
+            self.rand
+                .get_beacon_randomness(personalization, rand_epoch, entropy)
+                .map_err(|e| e.downcast_fatal("could not get randomness"))?
+        };
         Ok(Randomness(r))
     }
 
@@ -843,6 +856,9 @@ where
     fn charge_gas(&mut self, name: &'static str, compute: i64) -> Result<(), ActorError> {
         self.charge_gas(GasCharge::new(name, compute, 0))
     }
+    fn base_fee(&self) -> &TokenAmount {
+        &self.base_fee
+    }
 }
 
 impl<'bs, BS, R, C, LB, V, P> Syscalls for DefaultRuntime<'bs, '_, BS, R, C, LB, V, P>
@@ -1033,6 +1049,16 @@ where
             })
             .collect();
         Ok(out)
+    }
+
+    fn verify_aggregate_seals(
+        &self,
+        aggregate: &fil_types::AggregateSealVerifyProofAndInfos,
+    ) -> Result<(), Box<dyn StdError>> {
+        self.gas_tracker
+            .borrow_mut()
+            .charge_gas(self.price_list.on_verify_aggregate_seals(&aggregate))?;
+        V::verify_aggregate_seals(aggregate)
     }
 }
 
