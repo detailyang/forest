@@ -403,6 +403,7 @@ where
                     self.hamt.delete(&addr.to_bytes())?;
                 }
                 Some(ref state) => {
+                    println!("flush {} {} {}", addr, state.code, state.balance);
                     self.hamt.set(addr.to_bytes().into(), state.clone())?;
                 }
             }

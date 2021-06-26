@@ -29,7 +29,7 @@ mod tests {
 
         async fn _test_validate(&self) {
             println!("{:?}", UPGRADE_PLACEHOLDER_HEIGHT);
-            let db = db::rocks::RocksDb::open("/Users/didi/.forest/db").unwrap();
+            let db = db::rocks::RocksDb::open("/Users/detailyang/.forest/db").unwrap();
 
             let db = Arc::new(db);
 
@@ -40,7 +40,7 @@ mod tests {
             let bs = sm.blockstore();
             let cs = sm.chain_store().clone();
 
-            let init_cid = cid::Cid::from_str("bafy2bzacebl3zdyqdxpl4pq2ntxzeklqo3y3ph7dsnyfqjf2xmmznmks35ti6").unwrap();
+            let init_cid = cid::Cid::from_str("bafy2bzaceaz4zlqfwnphjufmezi37ub3ic6lmkzs7fh6lszyaoilmhyr5ec22").unwrap();
             let mut oldest_parent = TipsetKeys::new(vec![init_cid]);
             let mut parent_tipsets = vec![];
             let mut blocks = std::collections::HashMap::new();
@@ -63,8 +63,8 @@ mod tests {
 
             let headers: Vec<&blocks::BlockHeader> = parent_tipsets.iter().flat_map(|t| t.blocks()).collect();
 
-            for tipset in parent_tipsets.iter().rev().skip(80) {
-                if tipset.epoch() < 100 {
+            for tipset in parent_tipsets.iter().rev().skip(2600) {
+                if tipset.epoch() < 2644 {
                     continue;
                 }
                 let full = cs.fill_tipset(&tipset).unwrap();
@@ -102,6 +102,9 @@ mod tests {
 
     #[async_std::test]
     async fn test_validate() {
+        address::NETWORK_DEFAULT
+            .set(address::Network::Testnet)
+            .unwrap();
         let my = My::<MockVerifier>::new();
         my._test_validate().await
     }

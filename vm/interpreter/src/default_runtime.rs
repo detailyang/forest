@@ -417,7 +417,7 @@ where
                 .map_err(|e| e.wrap("failed to transfer funds"))?;
         }
 
-        if msg.method_num() != METHOD_SEND {
+        if msg.method_num() != 0 {
             self.charge_gas(ACTOR_EXEC_GAS)?;
             return self.invoke(to_actor.code, msg.method_num(), msg.params(), msg.to());
         }
@@ -714,7 +714,7 @@ where
         self.allow_internal = true;
 
         // Return error after allow_internal is reset
-        let r = r?;
+        let r = r.expect("failed to get runtime");
 
         let c = self.put(&state)?;
 

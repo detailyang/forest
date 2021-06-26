@@ -15,7 +15,7 @@ pub enum SyncStage {
     Idle,
     /// Syncing headers from the heaviest tipset to genesis.
     Headers,
-    /// Persisting headers on chain from heaviest to genesis.
+    /// Persburnisting headers on chain from heaviest to genesis.
     PersistHeaders,
     /// Syncing messages and performing state transitions.
     Messages,

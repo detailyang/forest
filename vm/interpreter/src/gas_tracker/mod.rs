@@ -33,6 +33,7 @@ impl GasTracker {
                used, self.gas_available
             ))
         } else {
+            println!("gas {} {} {}", self.gas_used, used, to_use);
             self.gas_used += to_use;
             Ok(())
         }
