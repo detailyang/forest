@@ -110,7 +110,7 @@ mod tests {
                 ipld_get_base: 4,
                 ipld_put_base: 2,
                 ipld_put_per_byte: 1,
-                ..price_list_by_epoch(0)
+                ..price_list_by_epoch(0).clone()
             },
             gas: Rc::new(RefCell::new(GasTracker::new(5000, 0))),
             store: &db,
@@ -129,7 +129,7 @@ mod tests {
         let gbs = GasBlockStore {
             price_list: PriceList {
                 ipld_put_base: 12,
-                ..price_list_by_epoch(0)
+                ..price_list_by_epoch(0).clone()
             },
             gas: Rc::new(RefCell::new(GasTracker::new(10, 0))),
             store: &db,

@@ -11,6 +11,7 @@ use fil_types::{
 };
 use networks::UPGRADE_CALICO_HEIGHT;
 use num_traits::Zero;
+use std::collections::BTreeMap;
 use vm::{MethodNum, TokenAmount, METHOD_SEND};
 
 lazy_static! {
@@ -225,17 +226,24 @@ lazy_static! {
         .collect(),
         verify_post_discount: false,
     };
+
+   static ref PRICES: BTreeMap<ChainEpoch, &'static PriceList> = {
+        let mut prices: BTreeMap<ChainEpoch, &'static PriceList> = BTreeMap::new();
+        prices.insert(0 as ChainEpoch, &*BASE_PRICES);
+        prices.insert(UPGRADE_CALICO_HEIGHT, &*CALICO_PRICES);
+        prices
+    };
 }
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub(crate) struct ScalingCost {
     flat: i64,
     scale: i64,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct StepCost(Vec<Step>);
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, Eq, PartialEq)]
 pub(crate) struct Step {
     start: i64,
     cost: i64,
@@ -259,7 +267,7 @@ impl StepCost {
 }
 
 /// Provides prices for operations in the VM
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct PriceList {
     /// Compute gas charge multiplier
     // * This multiplier is not currently applied to anything, but is matching lotus.
@@ -508,10 +516,30 @@ impl PriceList {
 }
 
 /// Returns gas price list by Epoch for gas consumption.
-pub fn price_list_by_epoch(epoch: ChainEpoch) -> PriceList {
-    if epoch < UPGRADE_CALICO_HEIGHT {
-        BASE_PRICES.clone()
-    } else {
-        CALICO_PRICES.clone()
+pub fn price_list_by_epoch(epoch: ChainEpoch) -> &'static PriceList {
+    let best_epoch: ChainEpoch = 0;
+    let mut best_price = PRICES[&best_epoch];
+
+    for (e, p) in PRICES.iter().rev() {
+        if e > &best_epoch && e <= &epoch {
+            best_price = p;
+            break;
+        }
+    }
+
+    return best_price;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_price_list_by_epoch() {
+        let base_prices = price_list_by_epoch(0).clone();
+        assert_eq!(base_prices, BASE_PRICES.clone());
+
+        let calico_prices = price_list_by_epoch(UPGRADE_CALICO_HEIGHT).clone();
+        assert_eq!(calico_prices, CALICO_PRICES.clone());
     }
 }
