@@ -11,8 +11,7 @@ use clock::ChainEpoch;
 use fil_types::{FILECOIN_PRECISION, FIL_RESERVED};
 use interpreter::CircSupplyCalc;
 use networks::{
-    UPGRADE_ACTORS_V2_HEIGHT, UPGRADE_CALICO_HEIGHT, UPGRADE_IGNITION_HEIGHT,
-    UPGRADE_LIFTOFF_HEIGHT,
+    UPGRADE_ASSEMBLY_HEIGHT, UPGRADE_CALICO_HEIGHT, UPGRADE_IGNITION_HEIGHT, UPGRADE_LIFTOFF_HEIGHT,
 };
 use num_bigint::BigInt;
 use once_cell::sync::OnceCell;
@@ -158,7 +157,7 @@ fn get_fil_vested(genesis_info: &GenesisInfo, height: ChainEpoch) -> TokenAmount
         }
     }
 
-    if height <= UPGRADE_ACTORS_V2_HEIGHT {
+    if height <= UPGRADE_ASSEMBLY_HEIGHT {
         return_value += genesis_info
             .genesis_pledge
             .get()
@@ -239,7 +238,7 @@ fn get_circulating_supply<'a, DB: BlockStore>(
     let fil_mined = get_fil_mined(&state_tree)?;
     let fil_burnt = get_fil_burnt(&state_tree)?;
     let fil_locked = get_fil_locked(&state_tree)?;
-    let fil_reserve_distributed = if height > UPGRADE_ACTORS_V2_HEIGHT {
+    let fil_reserve_distributed = if height > UPGRADE_ASSEMBLY_HEIGHT {
         get_fil_reserve_disbursed(&state_tree)?
     } else {
         TokenAmount::default()

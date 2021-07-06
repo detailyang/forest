@@ -34,10 +34,17 @@ where
         round: ChainEpoch,
         entropy: &[u8],
     ) -> Result<[u8; 32], Box<dyn Error>> {
-        task::block_on(
-            self.cs
-                .get_chain_randomness_looking_backward(&self.blks, pers, round, entropy),
-        )
+        if round > networks::UPGRADE_HYPERDRIVE_HEIGHT {
+            task::block_on(
+                self.cs
+                    .get_chain_randomness_looking_forward(&self.blks, pers, round, entropy),
+            )
+        } else {
+            task::block_on(
+                self.cs
+                    .get_chain_randomness_looking_backward(&self.blks, pers, round, entropy),
+            )
+        }
     }
 
     fn get_beacon_randomness(

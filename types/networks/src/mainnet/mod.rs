@@ -18,11 +18,11 @@ pub const UPGRADE_SMOKE_HEIGHT: ChainEpoch = 51000;
 /// V3 network upgrade
 pub const UPGRADE_IGNITION_HEIGHT: ChainEpoch = 94000;
 /// V4 network upgrade
-pub const UPGRADE_ACTORS_V2_HEIGHT: ChainEpoch = 138720;
+pub const UPGRADE_ASSEMBLY_HEIGHT: ChainEpoch = 138720;
 /// V5 network upgrade
 pub const UPGRADE_TAPE_HEIGHT: ChainEpoch = 140760;
 /// Switching to mainnet network name
-pub const UPGRADE_LIFTOFF_HEIGHT: i64 = 148888;
+pub const UPGRADE_LIFTOFF_HEIGHT: ChainEpoch = 148888;
 /// V6 network upgrade
 pub const UPGRADE_KUMQUAT_HEIGHT: ChainEpoch = 170000;
 /// V7 network upgrade
@@ -32,18 +32,22 @@ pub const UPGRADE_PERSIAN_HEIGHT: ChainEpoch = 272400;
 /// V9 network upgrade
 pub const UPGRADE_ORANGE_HEIGHT: ChainEpoch = 336458;
 /// Remove burn on window PoSt fork
+/// 2020-12-22T02:00:00
 pub const UPGRADE_CLAUS_HEIGHT: ChainEpoch = 343200;
 /// V10 network upgrade
-pub const UPGRADE_ACTORS_V3_HEIGHT: ChainEpoch = 550321;
+/// 2021-03-04T00:00:30Z
+pub const UPGRADE_TRUST_HEIGHT: ChainEpoch = 550321;
 /// V11 network upgrade
+/// 2021-04-12T22:00:00Z
 pub const UPGRADE_NORWEGIAN_HEIGHT: ChainEpoch = 665280;
 /// V12 network upgrade
-pub const UPGRADE_ACTORS_V4_HEIGHT: ChainEpoch = 712320;
+/// 2021-04-29T06:00:00Z
+pub const UPGRADE_TURBO_HEIGHT: ChainEpoch = 712320;
 
-pub const UPGRADE_PLACEHOLDER_HEIGHT: ChainEpoch = 9999999;
+pub const UPGRADE_HYPERDRIVE_HEIGHT: ChainEpoch = 9999999;
 
 /// Current network version for the network
-pub const NEWEST_NETWORK_VERSION: NetworkVersion = NetworkVersion::V11;
+pub const NEWEST_NETWORK_VERSION: NetworkVersion = NetworkVersion::V12;
 
 /// Bootstrap peer ids
 pub const DEFAULT_BOOTSTRAP: &[&str] = &[

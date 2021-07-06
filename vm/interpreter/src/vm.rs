@@ -21,7 +21,7 @@ use forest_encoding::Cbor;
 use ipld_blockstore::BlockStore;
 use log::debug;
 use message::{ChainMessage, Message, MessageReceipt, UnsignedMessage};
-use networks::{UPGRADE_ACTORS_V4_HEIGHT, UPGRADE_CLAUS_HEIGHT};
+use networks::{UPGRADE_CLAUS_HEIGHT, UPGRADE_TURBO_HEIGHT};
 use num_bigint::{BigInt, Sign};
 use num_traits::Zero;
 use state_tree::StateTree;
@@ -180,7 +180,7 @@ where
         store: Arc<impl BlockStore + Send + Sync>,
     ) -> Result<Option<Cid>, Box<dyn StdError>> {
         match epoch {
-            x if x == UPGRADE_ACTORS_V4_HEIGHT => {
+            x if x == UPGRADE_TURBO_HEIGHT => {
                 let start = std::time::Instant::now();
                 log::info!("Running actors_v4 state migration");
                 // need to flush since we run_cron before the migration

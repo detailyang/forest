@@ -54,7 +54,7 @@ struct DrandPoint<'a> {
     pub config: &'a DrandConfig<'a>,
 }
 
-const VERSION_SCHEDULE: [Upgrade; 12] = [
+const VERSION_SCHEDULE: [Upgrade; 13] = [
     Upgrade {
         height: UPGRADE_BREEZE_HEIGHT,
         network: NetworkVersion::V1,
@@ -68,7 +68,7 @@ const VERSION_SCHEDULE: [Upgrade; 12] = [
         network: NetworkVersion::V3,
     },
     Upgrade {
-        height: UPGRADE_ACTORS_V2_HEIGHT,
+        height: UPGRADE_ASSEMBLY_HEIGHT,
         network: NetworkVersion::V4,
     },
     Upgrade {
@@ -92,7 +92,7 @@ const VERSION_SCHEDULE: [Upgrade; 12] = [
         network: NetworkVersion::V9,
     },
     Upgrade {
-        height: UPGRADE_ACTORS_V3_HEIGHT,
+        height: UPGRADE_TRUST_HEIGHT,
         network: NetworkVersion::V10,
     },
     Upgrade {
@@ -100,8 +100,12 @@ const VERSION_SCHEDULE: [Upgrade; 12] = [
         network: NetworkVersion::V11,
     },
     Upgrade {
-        height: UPGRADE_ACTORS_V4_HEIGHT,
+        height: UPGRADE_TURBO_HEIGHT,
         network: NetworkVersion::V12,
+    },
+    Upgrade {
+        height: UPGRADE_HYPERDRIVE_HEIGHT,
+        network: NetworkVersion::V13,
     },
 ];
 
@@ -110,9 +114,10 @@ pub fn get_network_version_default(epoch: ChainEpoch) -> NetworkVersion {
     VERSION_SCHEDULE
         .iter()
         .rev()
+        .filter(|u| u.height > 0)
         .find(|upgrade| epoch > upgrade.height)
         .map(|upgrade| upgrade.network)
-        .unwrap_or(NetworkVersion::V0)
+        .unwrap_or(NEWEST_NETWORK_VERSION)
 }
 
 /// Constructs a drand beacon schedule based on the build config.
