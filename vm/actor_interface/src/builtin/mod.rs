@@ -14,14 +14,14 @@ pub mod system;
 use cid::Cid;
 use num_bigint::BigInt;
 
-pub const EPOCH_DURATION_SECONDS: clock::ChainEpoch = actorv0::EPOCH_DURATION_SECONDS;
-pub const EPOCHS_IN_DAY: clock::ChainEpoch = actorv0::EPOCHS_IN_DAY;
+pub const EPOCH_DURATION_SECONDS: clock::ChainEpoch = actorv5::EPOCH_DURATION_SECONDS;
+pub const EPOCHS_IN_DAY: clock::ChainEpoch = actorv5::EPOCHS_IN_DAY;
 
 // Aliases for common addresses
-pub static CHAOS_ACTOR_ADDR: &actorv0::CHAOS_ACTOR_ADDR = &actorv0::CHAOS_ACTOR_ADDR;
-pub static BURNT_FUNDS_ACTOR_ADDR: &actorv0::BURNT_FUNDS_ACTOR_ADDR =
-    &actorv0::BURNT_FUNDS_ACTOR_ADDR;
-pub static RESERVE_ADDRESS: &actorv0::RESERVE_ADDRESS = &actorv0::RESERVE_ADDRESS;
+pub static CHAOS_ACTOR_ADDR: &actorv5::CHAOS_ACTOR_ADDR = &actorv5::CHAOS_ACTOR_ADDR;
+pub static BURNT_FUNDS_ACTOR_ADDR: &actorv5::BURNT_FUNDS_ACTOR_ADDR =
+    &actorv5::BURNT_FUNDS_ACTOR_ADDR;
+pub static RESERVE_ADDRESS: &actorv5::RESERVE_ADDRESS = &actorv5::RESERVE_ADDRESS;
 
 /// Returns true if the code belongs to a builtin actor.
 pub fn is_builtin_actor(code: &Cid) -> bool {
@@ -29,6 +29,7 @@ pub fn is_builtin_actor(code: &Cid) -> bool {
         || actorv2::is_builtin_actor(code)
         || actorv3::is_builtin_actor(code)
         || actorv4::is_builtin_actor(code)
+        || actorv5::is_builtin_actor(code)
 }
 
 /// Returns true if the code belongs to an account actor.
@@ -37,6 +38,7 @@ pub fn is_account_actor(code: &Cid) -> bool {
         || actorv2::is_account_actor(code)
         || actorv3::is_account_actor(code)
         || actorv4::is_account_actor(code)
+        || actorv5::is_account_actor(code)
 }
 
 /// Returns true if the code belongs to a singleton actor.
@@ -45,6 +47,7 @@ pub fn is_singleton_actor(code: &Cid) -> bool {
         || actorv2::is_singleton_actor(code)
         || actorv3::is_singleton_actor(code)
         || actorv4::is_singleton_actor(code)
+        || actorv5::is_singleton_actor(code)
 }
 
 /// Returns true if the code belongs to a miner actor.
@@ -53,6 +56,7 @@ pub fn is_miner_actor(code: &Cid) -> bool {
         || code == &*actorv2::MINER_ACTOR_CODE_ID
         || code == &*actorv3::MINER_ACTOR_CODE_ID
         || code == &*actorv4::MINER_ACTOR_CODE_ID
+        || code == &*actorv5::MINER_ACTOR_CODE_ID
 }
 
 #[derive(Default, Clone, Debug, PartialEq)]
