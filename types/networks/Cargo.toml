@@ -12,7 +12,7 @@ beacon = { path = "../../blockchain/beacon" }
 serde_json = "1.0"
 
 [features]
-default = ["mainnet"]
+default = []
 mainnet = []
 interopnet = []
 devnet = []
