@@ -516,7 +516,7 @@ impl PriceList {
 }
 
 /// Returns gas price list by Epoch for gas consumption.
-pub fn price_list_by_epoch(epoch: ChainEpoch) -> &'static PriceList {
+pub fn price_list_by_epoch<'a>(epoch: ChainEpoch) -> &'a PriceList {
     let best_epoch: ChainEpoch = 0;
     let mut best_price = PRICES[&best_epoch];
 

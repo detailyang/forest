@@ -94,7 +94,7 @@ pub struct DefaultRuntime<'db, 'vm, BS, R, C, LB, V, P = DefaultNetworkParams> {
 
     depth: u64,
     num_actors_created: u64,
-    price_list: &'static PriceList,
+    price_list: &'vm PriceList,
     rand: &'vm R,
     caller_validated: bool,
     allow_internal: bool,
